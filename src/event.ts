@@ -47,6 +47,8 @@ export class BaseEvent {
       content: this.content
     };
   }
+
+  inspect(): any { return this.toJSON(); }
 }
 
 //    _____ _             __        ______                 __
