@@ -150,3 +150,114 @@ export class AudioContent extends BaseContent {
     return obj;
   }
 }
+
+//     __                     __  _
+//    / /   ____  _________ _/ /_(_)___  ____
+//   / /   / __ \/ ___/ __ `/ __/ / __ \/ __ \
+//  / /___/ /_/ / /__/ /_/ / /_/ / /_/ / / / /
+// /_____/\____/\___/\__,_/\__/_/\____/_/ /_/
+const _location = Symbol('_location');
+
+export interface LocationContentLocation {
+  title: string,
+  latitude: number,
+  longitude: number,
+  address?: string
+}
+
+export class LocationContent extends TextContent {
+  get contentType(): number { return ContentType.Location; }
+
+  get location(): LocationContentLocation {
+    const location: LocationContentLocation = this[_location];
+    const ret: LocationContentLocation = {
+      title: this.text,
+      latitude: location.latitude,
+      longitude: location.longitude
+    };
+    if (location.address) { ret.address = location.address; }
+    return ret;
+  }
+  set location(loc: LocationContentLocation) {
+    if (loc && typeof loc.title === 'string' &&
+      typeof loc.latitude === 'number' &&
+      typeof loc.longitude === 'number') {
+
+      this.text = loc.title;
+
+      const location = {} as LocationContentLocation;
+      location.latitude = loc.latitude;
+      location.longitude = loc.longitude;
+
+      if (typeof loc.address === 'string') {
+        location.address = loc.address;
+      }
+
+      this[_location] = location;
+    }
+  }
+
+  constructor(param?: LocationContentLocation) {
+    param = param || {} as LocationContentLocation;
+    super(param.title);
+    this[_location] = {};
+    this.location = param;
+  }
+
+  toJSON(): any {
+    const obj = super.toJSON();
+    obj.location = this.location;
+    return obj;
+  }
+}
+
+//    _____ __  _      __
+//   / ___// /_(_)____/ /_____  _____
+//   \__ \/ __/ / ___/ //_/ _ \/ ___/
+//  ___/ / /_/ / /__/ ,< /  __/ /
+// /____/\__/_/\___/_/|_|\___/_/
+const _metadata = Symbol('_metadata');
+
+export interface StickerContentMeta {
+  STKID: string,
+  STKPKGID: string,
+  STKVER: string
+}
+
+export class StickerContent extends BaseContent {
+  get contentType(): number { return ContentType.Sticker; }
+
+  get metadata(): StickerContentMeta {
+    const metadata: StickerContentMeta = this[_metadata];
+    return {
+      STKID: metadata.STKID,
+      STKPKGID: metadata.STKPKGID,
+      STKVER: metadata.STKVER
+    };
+  }
+  set metadata(meta: StickerContentMeta) {
+    if (meta && typeof meta.STKID === 'string' &&
+      typeof meta.STKPKGID === 'string' &&
+      typeof meta.STKVER === 'string') {
+
+      const metadata = {} as StickerContentMeta;
+      metadata.STKID = meta.STKID;
+      metadata.STKPKGID = meta.STKPKGID;
+      metadata.STKVER = meta.STKVER;
+      this[_metadata] = metadata;
+    }
+  }
+
+  constructor(param?: StickerContentMeta) {
+    param = param || {} as StickerContentMeta;
+    super();
+    this[_metadata] = {};
+    this.metadata = param;
+  }
+
+  toJSON(): any {
+    const obj = super.toJSON();
+    obj.contentMetadata = this.metadata;
+    return obj;
+  }
+}
