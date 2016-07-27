@@ -1,3 +1,5 @@
+import { IncomingMessage } from 'http';
+
 import * as Q from 'q';
 import * as request from 'request';
 
@@ -13,7 +15,13 @@ export interface APIClientOption {
   Endpoint?: string
 }
 
-export type APICallback = (err: Error, result: any) => void;
+export interface HTTPError extends Error {
+  status?: number,
+  res?: IncomingMessage,
+  body?: any
+}
+
+export type APICallback = (err: HTTPError, result: any) => void;
 
 const _headers = Symbol('_headers');
 const _endpoint = Symbol('_endpoint');
@@ -52,7 +60,16 @@ export class ProfileAPIClient extends BaseAPIClient {
     };
 
     return Q.nfcall(request, options)
-      .spread((res, body) => Q(body))
+      .spread((res: IncomingMessage, body: any) => {
+        if (res.statusCode >= 400) {
+          const err = new Error(res.statusMessage) as HTTPError;
+          err.status = res.statusCode;
+          err.res = res;
+          err.body = body;
+          throw err;
+        }
+        return body;
+      })
       .nodeify(cb);
   }
 
@@ -69,7 +86,7 @@ export class ProfileAPIClient extends BaseAPIClient {
             }
           });
         }
-        return Q(map);
+        return map;
       })
       .nodeify(cb)
   }
@@ -96,7 +113,16 @@ export class POSTEventAPIClient extends BaseAPIClient {
     };
 
     return Q.nfcall(request, options)
-      .spread((res, body) => Q(body))
+      .spread((res: IncomingMessage, body: any) => {
+        if (res.statusCode >= 400) {
+          const err = new Error(res.statusMessage) as HTTPError;
+          err.status = res.statusCode;
+          err.res = res;
+          err.body = body;
+          throw err;
+        }
+        return body;
+      })
       .nodeify(cb);
   }
 }
