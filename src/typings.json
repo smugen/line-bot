@@ -1,6 +1,7 @@
 {
   "globalDependencies": {
-    "node": "registry:env/node#4.0.0+20160622202520",
+    "express-serve-static-core": "registry:dt/express-serve-static-core#4.0.0+20160715232503",
+    "node": "registry:env/node#4.0.0+20160723033700",
     "q": "registry:dt/q#0.0.0+20160613154756"
   },
   "dependencies": {
