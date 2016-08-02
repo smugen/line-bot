@@ -1,6 +1,7 @@
-enum ContentType {
+export enum ContentType {
   Base = 0, Text, Image, Video, Audio,
   Location = 7, Sticker,
+  Contact = 10,
   RichMessage = 12
 }
 

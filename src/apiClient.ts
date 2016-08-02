@@ -12,21 +12,23 @@ export interface APIClientOption {
   ChannelID: string,
   ChannelSecret: string,
   ChannelMID: string,
-  Endpoint?: string
+  profileEndpoint?: string,
+  postEventEndpoint?: string
 }
 
 export interface HTTPError extends Error {
   status?: number,
-  res?: IncomingMessage,
+  getResponse?: () => IncomingMessage,
   body?: any
 }
 
 export type APICallback = (err: HTTPError, result: any) => void;
 
 const _headers = Symbol('_headers');
-const _endpoint = Symbol('_endpoint');
+const _profileEndpoint = Symbol('_profileEndpoint');
+const _postEventEndpoint = Symbol('_postEventEndpoint');
 
-export class BaseAPIClient {
+export class LineAPIClient {
   constructor(option: APIClientOption) {
     option = option || {} as APIClientOption;
     this[_headers] = {
@@ -34,25 +36,15 @@ export class BaseAPIClient {
       'X-Line-ChannelSecret': option.ChannelSecret,
       'X-Line-Trusted-User-With-ACL': option.ChannelMID
     };
-    this[_endpoint] = option.Endpoint;
-  }
-}
-
-//     ____             _____ __
-//    / __ \_________  / __(_) /__
-//   / /_/ / ___/ __ \/ /_/ / / _ \
-//  / ____/ /  / /_/ / __/ / /  __/
-// /_/   /_/   \____/_/ /_/_/\___/
-export class ProfileAPIClient extends BaseAPIClient {
-  constructor(option: APIClientOption) {
-    option = option || {} as APIClientOption;
-    option.Endpoint = option.Endpoint || profileEndpoint;
-    super(option);
+    this[_profileEndpoint] =
+      option.profileEndpoint || profileEndpoint;
+    this[_postEventEndpoint] =
+      option.postEventEndpoint || postEventEndpoint;
   }
 
   getProfiles(mids: string[], cb?: APICallback): Q.Promise<any> {
     const options = {
-      url: this[_endpoint],
+      url: this[_profileEndpoint],
       method: 'GET',
       headers: this[_headers],
       qs: { mids: mids.join(',') },
@@ -64,7 +56,7 @@ export class ProfileAPIClient extends BaseAPIClient {
         if (res.statusCode >= 400) {
           const err = new Error(res.statusMessage) as HTTPError;
           err.status = res.statusCode;
-          err.res = res;
+          err.getResponse = () => res;
           err.body = body;
           throw err;
         }
@@ -90,23 +82,10 @@ export class ProfileAPIClient extends BaseAPIClient {
       })
       .nodeify(cb)
   }
-}
-
-//     ____  ____  ___________   ______                 __
-//    / __ \/ __ \/ ___/_  __/  / ____/   _____  ____  / /_
-//   / /_/ / / / /\__ \ / /    / __/ | | / / _ \/ __ \/ __/
-//  / ____/ /_/ /___/ // /    / /___ | |/ /  __/ / / / /_
-// /_/    \____//____//_/    /_____/ |___/\___/_/ /_/\__/
-export class POSTEventAPIClient extends BaseAPIClient {
-  constructor(option: APIClientOption) {
-    option = option || {} as APIClientOption;
-    option.Endpoint = option.Endpoint || postEventEndpoint;
-    super(option);
-  }
 
   post(event: BaseEvent, cb?: APICallback): Q.Promise<any> {
     const options = {
-      url: this[_endpoint],
+      url: this[_postEventEndpoint],
       method: 'POST',
       headers: this[_headers],
       json: event
@@ -117,7 +96,7 @@ export class POSTEventAPIClient extends BaseAPIClient {
         if (res.statusCode >= 400) {
           const err = new Error(res.statusMessage) as HTTPError;
           err.status = res.statusCode;
-          err.res = res;
+          err.getResponse = () => res;
           err.body = body;
           throw err;
         }
